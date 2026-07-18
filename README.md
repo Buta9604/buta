@@ -2,21 +2,33 @@
 
 Adult browser **HFO roleplay** game (18+).
 
-Play as a customizable character. Bond with partners, then enter guided hands-free sessions designed to take you to climax.
+Play as a customizable character. Bond with a partner, then enter a guided hands-free session designed to take you to climax.
 
-## Status
+## Play locally
 
-Planning locked. See:
+```bash
+npm install
+npm run dev
+```
 
-- [`docs/GAME_PLAN.md`](./docs/GAME_PLAN.md)
+Open the URL Vite prints (usually `http://localhost:5173`).
 
-## Locked direction
+```bash
+npm run build   # production build
+npm run preview # preview production build
+```
 
-- Goal in play: **HFO** (hands-free orgasm)
-- Customizable player character
-- Art: dreamlike sensual realism
-- No game-side hard content bans (optional personal prefs only)
+## Vertical slice (current)
 
-## Next
+1. Age gate  
+2. Optional personal limits  
+3. Character creator  
+4. Hub with **Aurelia**  
+5. Bond scene → unlocks **Soft Release**  
+6. Full HFO session (contract → induction → deepen → edge → climax → aftercare)
 
-Build Phase 1–2 vertical slice: creator + one partner + one full HFO session.
+Progress saves in `localStorage` (export/import from the hub).
+
+## Design
+
+See [`docs/GAME_PLAN.md`](./docs/GAME_PLAN.md).

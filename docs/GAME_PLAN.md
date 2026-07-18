@@ -315,18 +315,18 @@ Not cute anime-default, not sterile 3D porn, not abstract shapes.
 
 Decisions locked: HFO goal, customizable PC, sensual-realism art, no game-side content bans.
 
-### Phase 1 — Engine skeleton
+### Phase 1 — Engine skeleton ✅
 
 - Vite/React/TS bootstrap  
 - Age gate, optional prefs, save  
 - Character creator (MVP fields)  
-- Story runner + session runner stubs  
+- Story runner + session runner  
 
-### Phase 2 — Vertical slice (prove HFO loop)
+### Phase 2 — Vertical slice (prove HFO loop) ✅
 
-- 1 partner  
+- 1 partner (Aurelia)  
 - 1 bond scene  
-- 1 complete HFO session (contract → induction → peak → aftercare)  
+- 1 complete HFO session (contract → induction → deepen → edge → peak → aftercare)  
 - Breath cues + heat/focus feel  
 - Dreamlike full-bleed UI  
 
