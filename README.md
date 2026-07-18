@@ -31,4 +31,5 @@ Progress saves in `localStorage` (export/import from the hub).
 
 ## Design
 
-See [`docs/GAME_PLAN.md`](./docs/GAME_PLAN.md).
+- [`docs/GAME_PLAN.md`](./docs/GAME_PLAN.md) — master design
+- [`docs/IMPROVEMENT_PLAN.md`](./docs/IMPROVEMENT_PLAN.md) — how to make it better (priority order)
