@@ -1,13 +1,22 @@
 # buta
 
-Adult browser roleplay game (18+).
+Adult browser **HFO roleplay** game (18+).
+
+Play as a customizable character. Bond with partners, then enter guided hands-free sessions designed to take you to climax.
 
 ## Status
 
-Planning phase. See the master design doc:
+Planning locked. See:
 
 - [`docs/GAME_PLAN.md`](./docs/GAME_PLAN.md)
 
+## Locked direction
+
+- Goal in play: **HFO** (hands-free orgasm)
+- Customizable player character
+- Art: dreamlike sensual realism
+- No game-side hard content bans (optional personal prefs only)
+
 ## Next
 
-Lock tone, partners, and art direction (questions at the end of the plan), then build the Phase 1–2 vertical slice.
+Build Phase 1–2 vertical slice: creator + one partner + one full HFO session.
