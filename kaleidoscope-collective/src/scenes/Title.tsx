@@ -1,5 +1,5 @@
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
-import { GoldDust, ImpactFlash, Vignette } from "../components/Effects";
+import { ImpactFlash, Vignette } from "../components/Effects";
 import { StainedGlass } from "../components/StainedGlass";
 import {
   FONT_BODY,
@@ -160,9 +160,8 @@ export const Title: React.FC = () => {
         </div>
       </AbsoluteFill>
 
-      <GoldDust count={30} seed="title" opacity={0.6} />
       <Vignette strength={0.6} />
-      <ImpactFlash at={0} length={14} />
+      <ImpactFlash at={0} length={14} peak={0.35} />
     </AbsoluteFill>
   );
 };

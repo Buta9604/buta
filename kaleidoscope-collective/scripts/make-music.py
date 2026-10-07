@@ -1,6 +1,6 @@
 """Synthesize the original soundtrack for the Kaleidoscope Collective promo.
 
-120 BPM, D minor (Dm - Bb - F - C), 38 seconds. One bar = 2 s = 60 video
+120 BPM, D minor (Dm - Bb - F - C), 40 seconds. One bar = 2 s = 60 video
 frames at 30 fps, so every scene cut in the video lands on a downbeat.
 
 Usage: python3 scripts/make-music.py public/music.wav
@@ -15,7 +15,7 @@ SR = 44100
 BPM = 120
 BEAT = 60 / BPM  # 0.5 s
 BAR = 4 * BEAT  # 2 s
-LENGTH = 38.0
+LENGTH = 40.0
 N = int(LENGTH * SR)
 rng = np.random.default_rng(7)
 
@@ -23,9 +23,10 @@ rng = np.random.default_rng(7)
 INTRO_END = 4.0
 GROOVE_START = 8.0
 STRAINS = 16.0
-DROP = 24.0
-CUP = 30.0
-END_CARD = 32.0
+ROLL = 22.0  # "and 1st place goes to..." drum roll
+DROP = 24.0  # Permanent Marker winner reveal
+BREAK = 30.0  # calm breakdown under the trichome footage
+END_CARD = 34.0
 
 CHORDS = [  # MIDI notes, one chord per bar
     [62, 65, 69],  # Dm
@@ -219,35 +220,47 @@ place(fx, np.stack([reverse_cymbal(1.5)] * 2), INTRO_END - 1.5, 1.0)
 
 # Impacts on the big moments
 for when, size in [(INTRO_END, 1.0), (GROOVE_START, 0.6), (STRAINS, 0.7),
-                   (DROP, 1.0), (CUP, 0.9), (END_CARD, 1.0)]:
+                   (DROP, 1.1), (BREAK, 0.35), (END_CARD, 0.9)]:
     place(fx, np.stack([impact(size)] * 2), when, 0.55)
 
 # Risers into the section changes
-for target, dur in [(GROOVE_START, 2.0), (STRAINS, 2.0), (DROP, 3.0), (END_CARD, 2.0)]:
+for target, dur in [(GROOVE_START, 2.0), (STRAINS, 2.0), (DROP, 2.0), (END_CARD, 2.0)]:
     place(fx, np.stack([riser(dur)] * 2), target - dur, 0.35)
 
 # Smaller sparkle hits on each strain card change
-for k in range(1, 4):
+for k in range(1, 3):
     place(fx, np.stack([reverse_cymbal(0.5)] * 2), STRAINS + k * BAR - 0.5, 0.6)
 
 
-def drum_bar(start, full=True, half_time=False):
+def brass_stab(chord, dur):
+    """Bright detuned-saw chord for the winner fanfare."""
+    n = int(dur * SR)
+    out = np.zeros(n)
+    for m in chord:
+        for d in (-0.08, 0.0, 0.08):
+            out += saw(mtof(m) * 2 ** (d / 12), n, rng.random())
+    out = fft_filter(out, hi=3200)
+    return out * adsr(n, 0.01, 0.25, 0.55, 0.3) / (3 * len(chord))
+
+
+# Winner fanfare: rising stabs into the reveal, a big chord on the drop
+for t_s, chord, dur, g in [
+    (DROP - 0.5, [62, 65, 69], 0.22, 0.45),
+    (DROP - 0.25, [64, 67, 71], 0.22, 0.5),
+    (DROP, [62, 66, 69, 74], 1.6, 0.75),  # D major lift for the win
+    (DROP + 2.0, [58, 62, 65, 70], 0.9, 0.45),
+    (DROP + 4.0, [65, 69, 72, 77], 0.9, 0.45),
+]:
+    place(fx, np.stack([brass_stab(chord, dur)] * 2), t_s, g)
+
+
+def drum_bar(start, full=True):
     for beat in range(4):
         bt = start + beat * BEAT
-        if half_time:
-            if beat in (0,):
-                place(drums, K, bt)
-                kick_times.append(bt)
-            if beat == 2:
-                place(drums, C, bt, 1.1)
-            if beat == 3:
-                place(drums, K, bt + BEAT / 2, 0.8)
-                kick_times.append(bt + BEAT / 2)
-        else:
-            place(drums, K, bt)
-            kick_times.append(bt)
-            if full and beat in (1, 3):
-                place(drums, C, bt)
+        place(drums, K, bt)
+        kick_times.append(bt)
+        if full and beat in (1, 3):
+            place(drums, C, bt)
         if full:
             for s in range(4):
                 vel = [0.9, 0.4, 0.65, 0.4][s]
@@ -258,34 +271,43 @@ def drum_bar(start, full=True, half_time=False):
 
 
 bar_t = INTRO_END
-while bar_t < END_CARD - 0.01:
-    in_drop = DROP <= bar_t < CUP
+while bar_t < BREAK - 0.01:
     if bar_t < GROOVE_START:
         drum_bar(bar_t, full=False)
-    elif bar_t + BAR > CUP - 0.01 and bar_t < CUP:
-        # 28-30 s: drums break for the last beat before the Cup hit
-        drum_bar(bar_t, full=True, half_time=True)
+    elif ROLL <= bar_t < DROP:
+        pass  # the drum roll owns this bar
     else:
-        drum_bar(bar_t, full=True, half_time=in_drop)
+        drum_bar(bar_t, full=True)
     bar_t += BAR
 
-# Snare roll into the drop
-roll_t = DROP - 1.0
-for k in range(16):
-    place(drums, C, roll_t + k * (1.0 / 16), 0.25 + 0.5 * k / 16)
+# Drum roll for "and 1st place goes to...": 8ths, then 16ths, then 32nds
+roll_hits = [ROLL + k * BEAT / 2 for k in range(4)]
+roll_hits += [ROLL + 1.0 + k * BEAT / 4 for k in range(4)]
+roll_hits += [ROLL + 1.5 + k * BEAT / 8 for k in range(8)]
+for k, rt in enumerate(roll_hits):
+    place(drums, C, rt, 0.3 + 0.6 * k / len(roll_hits))
+for k in range(4):
+    place(drums, K, ROLL + k * BEAT, 0.6)
+    kick_times.append(ROLL + k * BEAT)
 
-# Sub bass: on the groove, sustained under each bar, gliding in the drop
-for b in range(int(GROOVE_START // BAR), int(END_CARD // BAR)):
+# Breakdown: soft hats only, building back up for the end card
+for k in range(int((END_CARD - BREAK) / (BEAT / 2))):
+    ht = BREAK + 1.0 + k * BEAT / 2
+    if ht < END_CARD:
+        place(drums, H, ht, 0.25 + 0.35 * k / 14)
+
+# Sub bass: on the groove, sustained under each bar, gritty in the drop
+for b in range(int(GROOVE_START // BAR), int(BREAK // BAR)):
     start = b * BAR
     root = ROOTS[b % 4]
     n = int(BAR * SR)
     tt = t_axis(n)
     f = mtof(root + 12)
     sig = np.sin(2 * np.pi * f * tt) + 0.3 * np.sin(4 * np.pi * f * tt)
-    if DROP <= start < CUP:
+    if DROP <= start < BREAK:
         wob = 0.5 + 0.5 * np.sin(2 * np.pi * (4 / BAR) * tt - np.pi / 2)
         grit = fft_filter(np.tanh(saw(f, n) * 3), hi=300 + 900 * wob.mean())
-        sig = sig * 0.8 + grit * wob * 0.6
+        sig = sig * 0.8 + grit * wob * 0.5
     sig *= adsr(n, 0.01, 0.1, 0.9, 0.05)
     place(bass, sig, start, 0.42)
 
@@ -298,8 +320,8 @@ while t < LENGTH - 2.0:
     chord = CHORDS[bar_chord(t)]
     p = pattern[idx % 16]
     m = chord[p % 3] + (12 if p == 3 else 0) + 12
-    g = 0.22 if t < GROOVE_START or t >= END_CARD else 0.17
-    if DROP <= t < CUP:
+    g = 0.22 if t < GROOVE_START or t >= BREAK else 0.17
+    if DROP <= t < BREAK:
         g = 0.12
     if t >= END_CARD:
         g *= max(0.0, 1 - (t - END_CARD) / (LENGTH - 2.0 - END_CARD))

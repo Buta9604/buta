@@ -1,6 +1,5 @@
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { GoldDust, GoldLogo, ImpactFlash } from "../components/Effects";
-import { Kaleidoscope } from "../components/Kaleidoscope";
 import {
   FONT_BODY,
   FONT_DISPLAY,
@@ -10,7 +9,6 @@ import {
   PRISM_GRADIENT,
   textFill,
 } from "../theme";
-import { FOOTAGE } from "../timeline";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
@@ -31,43 +29,29 @@ const Pin: React.FC = () => (
   </svg>
 );
 
-/** 32-38 s. Logo, product, address, and the 21+ notice. */
+/** 34-40 s. Logo, product, address, and the 21+ notice. */
 export const EndCard: React.FC = () => {
   const frame = useCurrentFrame();
 
   return (
     <AbsoluteFill style={{ backgroundColor: INK, overflow: "hidden" }}>
-      <AbsoluteFill style={{ opacity: 0.32 }}>
-        <Kaleidoscope
-          sourceFrom={FOOTAGE.trichomes + 40}
-          sourceTo={FOOTAGE.last}
-          speed={0.5}
-          segments={12}
-          cx={360}
-          cy={560}
-          zoom={2}
-          rotation={frame * 0.35}
-          style={{ filter: "blur(3px) saturate(1.3)" }}
-        />
-      </AbsoluteFill>
       <AbsoluteFill
         style={{
-          background: `radial-gradient(ellipse 70% 55% at 50% 45%, rgba(7,6,10,0.55) 0%, ${INK} 100%)`,
+          background: `radial-gradient(ellipse 80% 45% at 50% 28%, #241b0a 0%, ${INK} 100%)`,
         }}
       />
-      <GoldDust count={40} seed="end" opacity={0.75} drift={0.5} />
+      <GoldDust count={30} seed="end" opacity={0.45} drift={0.5} />
 
       <AbsoluteFill style={{ alignItems: "center", paddingTop: 210 }}>
         <div
           style={{
             opacity: interpolate(frame, [0, 14], [0, 1], clamp),
             scale: String(
-              interpolate(frame, [0, 22], [1.25, 1], {
+              interpolate(frame, [0, 26], [1.08, 1], {
                 ...clamp,
                 easing: Easing.bezier(0.16, 1, 0.3, 1),
               }),
             ),
-            rotate: `${Math.sin(frame / 40) * 2}deg`,
           }}
         >
           <GoldLogo
@@ -193,7 +177,7 @@ export const EndCard: React.FC = () => {
         </div>
       </AbsoluteFill>
 
-      <ImpactFlash at={0} length={14} />
+      <ImpactFlash at={0} length={14} peak={0.3} />
     </AbsoluteFill>
   );
 };

@@ -6,26 +6,19 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import { GoldDust, Vignette } from "../components/Effects";
+import { Vignette } from "../components/Effects";
 import { Kaleidoscope } from "../components/Kaleidoscope";
 import { FONT_DISPLAY, PRISM_GRADIENT, textFill } from "../theme";
-import { BEAT, FOOTAGE } from "../timeline";
+import { FOOTAGE } from "../timeline";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
-const SEGMENTS = [8, 12, 10, 16, 12, 14, 8, 12];
 
 /**
- * 12-16 s. The jar footage folded into a live kaleidoscope that changes shape
- * on every beat, then irises open onto the real jars.
+ * 12-16 s. The jar footage folded into a slowly turning live kaleidoscope,
+ * then irises open onto the real jars.
  */
 export const KaleidoJars: React.FC = () => {
   const frame = useCurrentFrame();
-  const beat = Math.floor(frame / BEAT);
-  const sinceBeat = frame % BEAT;
-  const punch = interpolate(sinceBeat, [0, 10], [1.12, 1], {
-    ...clamp,
-    easing: Easing.out(Easing.cubic),
-  });
 
   const iris = interpolate(frame, [84, 116], [0, 1200], {
     ...clamp,
@@ -34,17 +27,17 @@ export const KaleidoJars: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
-      <AbsoluteFill style={{ scale: String(punch) }}>
+      <AbsoluteFill>
         <Kaleidoscope
           sourceFrom={FOOTAGE.jars}
           sourceTo={FOOTAGE.jars + 70}
           speed={0.7}
-          segments={SEGMENTS[beat % SEGMENTS.length]}
+          segments={12}
           cx={373}
           cy={700}
           zoom={interpolate(frame, [0, 120], [1.25, 2.1])}
-          rotation={frame * 1.1}
-          sourceRotation={-frame * 0.6}
+          rotation={frame * 0.6}
+          sourceRotation={-frame * 0.3}
           style={{ filter: "saturate(1.4) contrast(1.1)" }}
         />
       </AbsoluteFill>
@@ -134,7 +127,6 @@ export const KaleidoJars: React.FC = () => {
         />
       </AbsoluteFill>
 
-      <GoldDust count={24} seed="kj" opacity={0.7} drift={1.5} />
       <Vignette strength={0.5} />
     </AbsoluteFill>
   );

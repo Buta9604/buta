@@ -6,7 +6,6 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import { JEWELS } from "../theme";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
@@ -50,35 +49,15 @@ export const GoldLogo: React.FC<{
   );
 };
 
-/** Quick chromatic light leak used on the cuts. */
-export const PrismFlash: React.FC<{ at: number; length?: number }> = ({
-  at,
-  length = 14,
-}) => {
-  const frame = useCurrentFrame();
-  const p = interpolate(frame, [at - length / 2, at + length / 2], [0, 1], clamp);
-  if (p <= 0 || p >= 1) return null;
-  const intensity = Math.sin(p * Math.PI);
-  return (
-    <AbsoluteFill
-      style={{
-        pointerEvents: "none",
-        mixBlendMode: "screen",
-        opacity: intensity,
-        backgroundImage: `linear-gradient(${110 + p * 40}deg, transparent ${-40 + p * 100}%, ${JEWELS[6]}aa ${-25 + p * 100}%, ${JEWELS[3]}cc ${-12 + p * 100}%, #ffffffee ${-4 + p * 100}%, ${JEWELS[5]}cc ${6 + p * 100}%, ${JEWELS[4]}99 ${18 + p * 100}%, transparent ${34 + p * 100}%)`,
-      }}
-    />
-  );
-};
-
 /** Plain white/gold flash for the big impacts. */
-export const ImpactFlash: React.FC<{ at: number; length?: number; color?: string }> = ({
-  at,
-  length = 12,
-  color = "#fff6dc",
-}) => {
+export const ImpactFlash: React.FC<{
+  at: number;
+  length?: number;
+  color?: string;
+  peak?: number;
+}> = ({ at, length = 12, color = "#fff6dc", peak = 0.5 }) => {
   const frame = useCurrentFrame();
-  const o = interpolate(frame, [at - 1, at, at + length], [0, 1, 0], clamp);
+  const o = interpolate(frame, [at - 1, at, at + length], [0, peak, 0], clamp);
   if (o <= 0) return null;
   return <AbsoluteFill style={{ backgroundColor: color, opacity: o, pointerEvents: "none" }} />;
 };
@@ -131,32 +110,3 @@ export const Vignette: React.FC<{ strength?: number }> = ({ strength = 0.75 }) =
     }}
   />
 );
-
-/** Four-point star sparkle. */
-export const Sparkle: React.FC<{
-  x: number;
-  y: number;
-  size: number;
-  progress: number;
-  color?: string;
-}> = ({ x, y, size, progress, color = "#fff7d6" }) => {
-  if (progress <= 0 || progress >= 1) return null;
-  const s = Math.sin(progress * Math.PI);
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="-50 -50 100 100"
-      style={{
-        position: "absolute",
-        left: x - size / 2,
-        top: y - size / 2,
-        scale: String(s),
-        rotate: `${progress * 90}deg`,
-        filter: `drop-shadow(0 0 12px ${color})`,
-      }}
-    >
-      <path d="M0,-50 C4,-8 8,-4 50,0 C8,4 4,8 0,50 C-4,8 -8,4 -50,0 C-8,-4 -4,-8 0,-50Z" fill={color} />
-    </svg>
-  );
-};

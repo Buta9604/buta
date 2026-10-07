@@ -10,13 +10,14 @@ export const SCENES = {
   title: { from: 120, duration: 120 },
   arriving: { from: 240, duration: 120 },
   kaleido: { from: 360, duration: 120 },
-  strains: { from: 480, duration: 240 },
-  scope: { from: 720, duration: 180 },
-  cup: { from: 900, duration: 60 },
-  end: { from: 960, duration: 180 },
+  strains: { from: 480, duration: 180 },
+  envelope: { from: 660, duration: 60 },
+  winner: { from: 720, duration: 180 },
+  scope: { from: 900, duration: 120 },
+  end: { from: 1020, duration: 180 },
 } as const;
 
-export const TOTAL_FRAMES = 1140;
+export const TOTAL_FRAMES = 1200;
 
 // Source clip (public/footage.mp4, 30 fps) landmarks, in source frames.
 export const FOOTAGE = {
@@ -24,6 +25,7 @@ export const FOOTAGE = {
   jars: 60, // stained-glass jars, 60-130
   microscope: 130, // AmScope camera to the monitor, 130-180
   trichomes: 180, // magnified trichomes on the monitor, 180-354
+  monitorFull: 255, // monitor fills the frame from here on
   last: 354,
 };
 

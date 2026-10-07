@@ -3,7 +3,6 @@ import {
   Easing,
   Img,
   interpolate,
-  random,
   staticFile,
   useCurrentFrame,
 } from "remotion";
@@ -13,103 +12,96 @@ import { FONT_BODY, FONT_LUXE, GOLD_GRADIENT, INK, textFill } from "../theme";
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const BRAND = "TOP GRASS";
 
+// Where the finished logo sits, and how big it is.
+const LOGO = { x: 540, y: 860, size: 560 };
+const LEAF_ASPECT = 776 / 926; // logo-leaf.png
+
+const wrapDeg = (deg: number) => ((((deg + 180) % 360) + 360) % 360) - 180;
+
 /**
- * 0-4 s. Nine gold leaves (one per leaf of the logo) spiral in out of the dark,
- * lock into a mandala, and fuse into the logo as the riser peaks.
+ * 0-4 s. Nine gold leaves (one per leaf of the logo) orbit in, straighten up
+ * and settle exactly on top of each other, so the logo is assembled from them
+ * rather than popping in.
  */
 export const Intro: React.FC = () => {
   const frame = useCurrentFrame();
 
-  const converge = interpolate(frame, [0, 96], [0, 1], {
+  const merge = interpolate(frame, [8, 96], [0, 1], {
     ...clamp,
-    easing: Easing.bezier(0.55, 0, 0.25, 1),
+    easing: Easing.bezier(0.45, 0, 0.15, 1),
   });
-  const ringRadius = interpolate(converge, [0, 1], [760, 0]);
-  const ringSpin = interpolate(frame, [0, 100], [-200, 0], {
+  const radius = interpolate(merge, [0, 1], [640, 0]);
+  const spin = interpolate(merge, [0, 1], [-140, 0]);
+  const leafSize = interpolate(merge, [0, 1], [190, LOGO.size]);
+  const leavesIn = interpolate(frame, [0, 22], [0, 1], clamp);
+  // The leaves hand over to the real logo while they are pixel-for-pixel on top of it.
+  const handover = interpolate(frame, [94, 104], [0, 1], clamp);
+  const glow = interpolate(frame, [92, 118], [0.2, 1], {
     ...clamp,
-    easing: Easing.bezier(0.2, 0.6, 0.3, 1),
+    easing: Easing.out(Easing.quad),
   });
-  const leafOpacity = interpolate(frame, [4, 24, 88, 100], [0, 1, 1, 0], clamp);
-
-  const logoIn = interpolate(frame, [86, 104], [0, 1], {
+  const settle = interpolate(frame, [96, 120], [1, 1.04], {
     ...clamp,
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
+    easing: Easing.inOut(Easing.sin),
   });
-  const pushIn = interpolate(frame, [108, 120], [1, 6], {
+  const exit = interpolate(frame, [110, 120], [1, 0], {
     ...clamp,
-    easing: Easing.in(Easing.cubic),
+    easing: Easing.in(Easing.quad),
   });
-  const exitFade = interpolate(frame, [112, 120], [1, 0], clamp);
 
   return (
     <AbsoluteFill
       style={{
-        background: `radial-gradient(circle at 50% 46%, #1d1608 0%, ${INK} 62%)`,
+        background: `radial-gradient(circle at 50% 45%, #1d1608 0%, ${INK} 62%)`,
         overflow: "hidden",
       }}
     >
-      <GoldDust count={70} seed="intro" opacity={0.7} drift={0.6} />
+      <GoldDust count={40} seed="intro" opacity={0.45} drift={0.5} />
 
-      {/* Light rays behind the mandala */}
-      <AbsoluteFill
-        style={{
-          opacity: interpolate(frame, [30, 100], [0, 0.55], clamp) * exitFade,
-          background:
-            "repeating-conic-gradient(from 0deg at 50% 46%, rgba(255,214,120,0.16) 0deg 6deg, rgba(0,0,0,0) 6deg 20deg)",
-          rotate: `${frame * 0.4}deg`,
-          scale: "1.8",
-        }}
-      />
-
-      <AbsoluteFill style={{ scale: String(pushIn), opacity: exitFade }}>
-        {/* Nine-leaf mandala */}
+      <AbsoluteFill style={{ opacity: exit, scale: String(settle) }}>
         {new Array(9).fill(0).map((_, i) => {
-          const angle = (i * 360) / 9 + ringSpin;
-          const rad = (angle * Math.PI) / 180;
-          const wobble = 1 + 0.15 * random(`leaf${i}`);
-          const x = 540 + Math.sin(rad) * ringRadius * wobble;
-          const y = 880 - Math.cos(rad) * ringRadius * wobble;
-          const size = interpolate(converge, [0, 1], [190, 330]);
+          const orbit = i * 40 + spin;
+          const rad = (orbit * Math.PI) / 180;
+          const x = LOGO.x + Math.sin(rad) * radius;
+          const y = LOGO.y - Math.cos(rad) * radius;
+          const width = leafSize * LEAF_ASPECT;
           return (
             <Img
               key={i}
               src={staticFile("logo-leaf.png")}
               style={{
                 position: "absolute",
-                left: x - (size * 0.84) / 2,
-                top: y - size / 2,
-                height: size,
-                rotate: `${angle}deg`,
-                opacity: leafOpacity * 0.9,
-                filter: "drop-shadow(0 0 18px rgba(255,200,90,0.55))",
+                left: x - width / 2,
+                top: y - leafSize / 2,
+                width,
+                height: leafSize,
+                rotate: `${wrapDeg(orbit) * (1 - merge)}deg`,
+                opacity: leavesIn * (1 - handover) * interpolate(merge, [0, 1], [0.85, 1]),
+                filter: "drop-shadow(0 0 14px rgba(255,200,90,0.35))",
               }}
             />
           );
         })}
 
-        {/* The logo itself */}
         <div
           style={{
             position: "absolute",
-            left: 540,
-            top: 880,
-            translate: "-50% -50%",
-            opacity: logoIn,
-            scale: String(interpolate(logoIn, [0, 1], [0.6, 1])),
+            left: LOGO.x - (LOGO.size * LEAF_ASPECT) / 2,
+            top: LOGO.y - LOGO.size / 2,
+            opacity: handover,
           }}
         >
           <GoldLogo
-            size={560}
-            sheen={interpolate(frame, [92, 118], [0, 1], clamp)}
-            glow={1}
+            size={LOGO.size}
+            sheen={interpolate(frame, [100, 118], [0, 1], clamp)}
+            glow={glow}
           />
         </div>
 
-        {/* Brand name */}
         <div
           style={{
             position: "absolute",
-            top: 1260,
+            top: 1230,
             width: "100%",
             display: "flex",
             justifyContent: "center",
@@ -120,9 +112,9 @@ export const Intro: React.FC = () => {
           }}
         >
           {BRAND.split("").map((ch, i) => {
-            const t = interpolate(frame, [40 + i * 4, 60 + i * 4], [0, 1], {
+            const t = interpolate(frame, [56 + i * 3, 80 + i * 3], [0, 1], {
               ...clamp,
-              easing: Easing.bezier(0.16, 1, 0.3, 1),
+              easing: Easing.out(Easing.cubic),
             });
             return (
               <span
@@ -131,12 +123,8 @@ export const Intro: React.FC = () => {
                   display: "inline-block",
                   whiteSpace: "pre",
                   opacity: t,
-                  translate: `0 ${interpolate(t, [0, 1], [40, 0])}px`,
-                  filter: `blur(${interpolate(t, [0, 1], [12, 0])}px)`,
-                  ...textFill(
-                    GOLD_GRADIENT,
-                    `${interpolate(frame, [40, 120], [0, 100])}% 0`,
-                  ),
+                  translate: `0 ${interpolate(t, [0, 1], [24, 0])}px`,
+                  ...textFill(GOLD_GRADIENT, `${interpolate(frame, [56, 120], [0, 60])}% 0`),
                 }}
               >
                 {ch}
@@ -147,7 +135,7 @@ export const Intro: React.FC = () => {
         <div
           style={{
             position: "absolute",
-            top: 1410,
+            top: 1380,
             width: "100%",
             textAlign: "center",
             fontFamily: FONT_BODY,
@@ -155,7 +143,7 @@ export const Intro: React.FC = () => {
             fontSize: 40,
             letterSpacing: "0.6em",
             color: "#e9d39a",
-            opacity: interpolate(frame, [76, 92], [0, 1], clamp),
+            opacity: interpolate(frame, [84, 100], [0, 1], clamp),
           }}
         >
           PRESENTS

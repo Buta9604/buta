@@ -1,6 +1,6 @@
 import { Video } from "@remotion/media";
 import { AbsoluteFill, Easing, interpolate, staticFile, useCurrentFrame } from "remotion";
-import { PrismFlash, Vignette } from "../components/Effects";
+import { Vignette } from "../components/Effects";
 import { SplitFlap } from "../components/SplitFlap";
 import { FONT_BODY, JEWELS } from "../theme";
 import { FOOTAGE } from "../timeline";
@@ -115,8 +115,6 @@ export const Arriving: React.FC = () => {
       </AbsoluteFill>
 
       <Vignette strength={0.55} />
-      <PrismFlash at={0} />
-      <PrismFlash at={120} length={16} />
     </AbsoluteFill>
   );
 };
