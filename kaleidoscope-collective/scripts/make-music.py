@@ -1,6 +1,6 @@
 """Synthesize the original soundtrack for the Kaleidoscope Collective promo.
 
-120 BPM, D minor (Dm - Bb - F - C), 40 seconds. One bar = 2 s = 60 video
+90 BPM, D minor (Dm - Bb - F - C), 20 bars = 53.3 seconds. One bar = 80 video
 frames at 30 fps, so every scene cut in the video lands on a downbeat.
 
 Usage: python3 scripts/make-music.py public/music.wav
@@ -12,21 +12,22 @@ import wave
 import numpy as np
 
 SR = 44100
-BPM = 120
-BEAT = 60 / BPM  # 0.5 s
-BAR = 4 * BEAT  # 2 s
-LENGTH = 40.0
+BPM = 90
+BEAT = 60 / BPM  # 0.667 s = 20 video frames
+BAR = 4 * BEAT  # 2.667 s = 80 video frames
+BARS = 20
+LENGTH = BARS * BAR
 N = int(LENGTH * SR)
 rng = np.random.default_rng(7)
 
 # Song sections (seconds) - mirrors the scene timeline in src/timeline.ts
-INTRO_END = 4.0
-GROOVE_START = 8.0
-STRAINS = 16.0
-ROLL = 22.0  # "and 1st place goes to..." drum roll
-DROP = 24.0  # Permanent Marker winner reveal
-BREAK = 30.0  # calm breakdown under the trichome footage
-END_CARD = 34.0
+INTRO_END = 2 * BAR
+GROOVE_START = 4 * BAR
+STRAINS = 8 * BAR
+ROLL = 11 * BAR  # "and 1st place goes to..." drum roll
+DROP = 12 * BAR  # Permanent Marker winner reveal
+BREAK = 15 * BAR  # calm breakdown under the trichome footage
+END_CARD = 17 * BAR
 
 CHORDS = [  # MIDI notes, one chord per bar
     [62, 65, 69],  # Dm
@@ -245,11 +246,11 @@ def brass_stab(chord, dur):
 
 # Winner fanfare: rising stabs into the reveal, a big chord on the drop
 for t_s, chord, dur, g in [
-    (DROP - 0.5, [62, 65, 69], 0.22, 0.45),
-    (DROP - 0.25, [64, 67, 71], 0.22, 0.5),
-    (DROP, [62, 66, 69, 74], 1.6, 0.75),  # D major lift for the win
-    (DROP + 2.0, [58, 62, 65, 70], 0.9, 0.45),
-    (DROP + 4.0, [65, 69, 72, 77], 0.9, 0.45),
+    (DROP - BEAT, [62, 65, 69], 0.3, 0.45),
+    (DROP - BEAT / 2, [64, 67, 71], 0.3, 0.5),
+    (DROP, [62, 66, 69, 74], 2.1, 0.75),  # D major lift for the win
+    (DROP + BAR, [58, 62, 65, 70], 1.2, 0.45),
+    (DROP + 2 * BAR, [65, 69, 72, 77], 1.2, 0.45),
 ]:
     place(fx, np.stack([brass_stab(chord, dur)] * 2), t_s, g)
 
@@ -282,8 +283,8 @@ while bar_t < BREAK - 0.01:
 
 # Drum roll for "and 1st place goes to...": 8ths, then 16ths, then 32nds
 roll_hits = [ROLL + k * BEAT / 2 for k in range(4)]
-roll_hits += [ROLL + 1.0 + k * BEAT / 4 for k in range(4)]
-roll_hits += [ROLL + 1.5 + k * BEAT / 8 for k in range(8)]
+roll_hits += [ROLL + 2 * BEAT + k * BEAT / 4 for k in range(4)]
+roll_hits += [ROLL + 3 * BEAT + k * BEAT / 8 for k in range(8)]
 for k, rt in enumerate(roll_hits):
     place(drums, C, rt, 0.3 + 0.6 * k / len(roll_hits))
 for k in range(4):
@@ -292,7 +293,7 @@ for k in range(4):
 
 # Breakdown: soft hats only, building back up for the end card
 for k in range(int((END_CARD - BREAK) / (BEAT / 2))):
-    ht = BREAK + 1.0 + k * BEAT / 2
+    ht = BREAK + BEAT + k * BEAT / 2
     if ht < END_CARD:
         place(drums, H, ht, 0.25 + 0.35 * k / 14)
 

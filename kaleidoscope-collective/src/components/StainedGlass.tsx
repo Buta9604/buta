@@ -24,6 +24,7 @@ type Props = {
   /** Phase of the light sweeping across the glass. */
   shimmer: number;
   leadWidth?: number;
+  lead?: string;
 };
 
 /** Leaded stained glass, matching the jar label art. */
@@ -36,6 +37,7 @@ export const StainedGlass: React.FC<Props> = ({
   shatter = 0,
   shimmer,
   leadWidth = 7,
+  lead = "#1d1257",
 }) => {
   const cells = useMemo<Cell[]>(() => {
     const pts: [number, number][] = [];
@@ -77,7 +79,7 @@ export const StainedGlass: React.FC<Props> = ({
           </linearGradient>
         ))}
       </defs>
-      <rect width={width} height={height} fill="#0d0b10" />
+      <rect width={width} height={height} fill={lead} />
       {cells.map((cell, i) => {
         const local = Math.min(
           1,
@@ -90,8 +92,8 @@ export const StainedGlass: React.FC<Props> = ({
         const blast = shatter * shatter * (900 + cell.seed * 900);
         const spin = shatter * (cell.seed - 0.5) * 540;
         const glow =
-          0.55 +
-          0.45 *
+          0.84 +
+          0.16 *
             Math.max(
               0,
               Math.cos((cell.dist / maxDist) * 6 - shimmer * Math.PI * 2),
@@ -101,7 +103,7 @@ export const StainedGlass: React.FC<Props> = ({
             key={i}
             points={cell.points}
             fill={`url(#${seed}-g${cell.color})`}
-            stroke="#0d0b10"
+            stroke={lead}
             strokeWidth={leadWidth}
             strokeLinejoin="round"
             opacity={glow * (1 - shatter * 0.6)}

@@ -4,8 +4,8 @@ import {
   interpolate,
   random,
   staticFile,
-  useCurrentFrame,
 } from "remotion";
+import { useCurrentFrame } from "../time";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
@@ -27,7 +27,7 @@ export const GoldLogo: React.FC<{
           inset: 0,
           width: "100%",
           height: "100%",
-          filter: `drop-shadow(0 0 ${40 * glow}px rgba(255, 196, 70, ${0.55 * glow})) drop-shadow(0 18px 30px rgba(0,0,0,0.6))`,
+          filter: `drop-shadow(0 0 ${40 * glow}px rgba(255, 196, 70, ${0.55 * glow})) drop-shadow(0 18px 30px rgba(20,8,70,0.45))`,
         }}
       />
       <div
@@ -39,7 +39,7 @@ export const GoldLogo: React.FC<{
           WebkitMaskSize: "100% 100%",
           maskSize: "100% 100%",
           backgroundImage:
-            "linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.0) 42%, rgba(255,255,240,0.95) 50%, rgba(255,255,255,0) 58%, transparent 62%)",
+            "linear-gradient(115deg, transparent 43%, rgba(255,255,240,0.0) 46%, rgba(255,250,225,0.7) 50%, rgba(255,255,240,0) 54%, transparent 57%)",
           backgroundSize: "300% 100%",
           backgroundPosition: `${interpolate(sheen, [0, 1], [100, 0])}% 0`,
           mixBlendMode: "screen",
@@ -49,20 +49,20 @@ export const GoldLogo: React.FC<{
   );
 };
 
-/** Plain white/gold flash for the big impacts. */
+/** Soft white/gold flash for the big impacts. */
 export const ImpactFlash: React.FC<{
   at: number;
   length?: number;
   color?: string;
   peak?: number;
-}> = ({ at, length = 12, color = "#fff6dc", peak = 0.5 }) => {
+}> = ({ at, length = 14, color = "#fff6dc", peak = 0.4 }) => {
   const frame = useCurrentFrame();
-  const o = interpolate(frame, [at - 1, at, at + length], [0, peak, 0], clamp);
+  const o = interpolate(frame, [at - 2, at, at + length], [0, peak, 0], clamp);
   if (o <= 0) return null;
   return <AbsoluteFill style={{ backgroundColor: color, opacity: o, pointerEvents: "none" }} />;
 };
 
-/** Floating gold dust / sparkles. */
+/** Floating gold dust. */
 export const GoldDust: React.FC<{
   count: number;
   seed: string;
@@ -75,12 +75,12 @@ export const GoldDust: React.FC<{
       {new Array(count).fill(0).map((_, i) => {
         const x0 = random(`${seed}x${i}`) * 1080;
         const y0 = random(`${seed}y${i}`) * 1920;
-        const speed = (0.4 + random(`${seed}s${i}`) * 1.6) * drift;
-        const size = 2 + random(`${seed}r${i}`) * 7;
+        const speed = (0.3 + random(`${seed}s${i}`) * 1.1) * drift;
+        const size = 3 + random(`${seed}r${i}`) * 7;
         const twinkle =
-          0.35 + 0.65 * Math.abs(Math.sin(frame * 0.08 + random(`${seed}t${i}`) * 6.28));
+          0.4 + 0.6 * Math.abs(Math.sin(frame * 0.05 + random(`${seed}t${i}`) * 6.28));
         const y = (((y0 - frame * speed) % 1920) + 1920) % 1920;
-        const x = x0 + Math.sin(frame * 0.02 + i) * 18;
+        const x = x0 + Math.sin(frame * 0.015 + i) * 22;
         return (
           <div
             key={i}
@@ -91,7 +91,8 @@ export const GoldDust: React.FC<{
               width: size,
               height: size,
               borderRadius: "50%",
-              background: "radial-gradient(circle, #fff8d8 0%, #f1c75b 45%, rgba(241,199,91,0) 75%)",
+              background:
+                "radial-gradient(circle, #fff8d8 0%, #f1c75b 45%, rgba(241,199,91,0) 75%)",
               opacity: twinkle,
               boxShadow: `0 0 ${size * 2}px rgba(255, 210, 110, 0.8)`,
             }}
@@ -102,11 +103,35 @@ export const GoldDust: React.FC<{
   );
 };
 
-export const Vignette: React.FC<{ strength?: number }> = ({ strength = 0.75 }) => (
+/** Slowly turning rays of light. */
+export const LightRays: React.FC<{
+  x?: string;
+  y?: string;
+  opacity?: number;
+  color?: string;
+  speed?: number;
+}> = ({ x = "50%", y = "46%", opacity = 0.5, color = "255,214,120", speed = 0.12 }) => {
+  const frame = useCurrentFrame();
+  return (
+    <AbsoluteFill
+      style={{
+        opacity,
+        background: `repeating-conic-gradient(from 0deg at ${x} ${y}, rgba(${color},0.22) 0deg 7deg, rgba(${color},0) 7deg 22deg)`,
+        rotate: `${frame * speed}deg`,
+        scale: "1.9",
+        maskImage: `radial-gradient(circle at ${x} ${y}, #000 0%, rgba(0,0,0,0.0) 62%)`,
+        WebkitMaskImage: `radial-gradient(circle at ${x} ${y}, #000 0%, rgba(0,0,0,0.0) 62%)`,
+      }}
+    />
+  );
+};
+
+/** A soft edge darkening, tinted violet rather than black. */
+export const Vignette: React.FC<{ strength?: number }> = ({ strength = 0.2 }) => (
   <AbsoluteFill
     style={{
       pointerEvents: "none",
-      background: `radial-gradient(ellipse 75% 60% at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,${strength}) 100%)`,
+      background: `radial-gradient(ellipse 80% 65% at 50% 50%, rgba(30,12,90,0) 55%, rgba(30,12,90,${strength}) 100%)`,
     }}
   />
 );

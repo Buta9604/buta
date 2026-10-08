@@ -1,120 +1,121 @@
 import { Video } from "@remotion/media";
-import { AbsoluteFill, Easing, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, interpolate, staticFile } from "remotion";
 import { Vignette } from "../components/Effects";
 import { SplitFlap } from "../components/SplitFlap";
-import { FONT_BODY, JEWELS } from "../theme";
-import { FOOTAGE } from "../timeline";
+import { useCurrentFrame } from "../time";
+import { FONT_BODY, glassPanel, JEWELS, SOFT_SHADOW } from "../theme";
+import { FOOTAGE, SLOW } from "../timeline";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
-/** 8-12 s. The display's model train pulls in, departure-board style. */
+/** The display's model train glides in under a split-flap departure board. */
 export const Arriving: React.FC = () => {
   const frame = useCurrentFrame();
-  const boardIn = interpolate(frame, [4, 18], [0, 1], {
+  const boardIn = interpolate(frame, [6, 34], [0, 1], {
     ...clamp,
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
-  const boardOut = interpolate(frame, [106, 118], [1, 0], clamp);
+  const boardOut = interpolate(frame, [100, 116], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
+    <AbsoluteFill style={{ backgroundColor: "#3a2a7a", overflow: "hidden" }}>
       <AbsoluteFill
         style={{
-          scale: String(interpolate(frame, [0, 120], [1.12, 1.28])),
-          filter: "saturate(1.25) contrast(1.08)",
+          scale: String(interpolate(frame, [0, 120], [1.1, 1.22], { ...clamp, easing: Easing.inOut(Easing.sin) })),
+          filter: "saturate(1.2) contrast(1.05) brightness(1.06)",
         }}
       >
         <Video
           src={staticFile("footage.mp4")}
           trimBefore={FOOTAGE.train}
-          playbackRate={0.5}
+          playbackRate={0.5 / SLOW}
           muted
           objectFit="cover"
           style={{ width: "100%", height: "100%" }}
         />
       </AbsoluteFill>
 
-      {/* Warm top/bottom grade for legibility */}
+      {/* a whisper of violet at the very top so the board sits well */}
       <AbsoluteFill
         style={{
           background:
-            "linear-gradient(180deg, rgba(7,6,10,0.85) 0%, rgba(7,6,10,0.15) 34%, rgba(7,6,10,0) 60%, rgba(7,6,10,0.75) 100%)",
+            "linear-gradient(180deg, rgba(60,34,140,0.32) 0%, rgba(60,34,140,0) 30%)",
         }}
       />
 
       <AbsoluteFill
         style={{
           alignItems: "center",
-          paddingTop: 210,
-          opacity: boardIn * boardOut,
-          translate: `0 ${interpolate(boardIn, [0, 1], [-60, 0])}px`,
+          paddingTop: 190,
+          opacity: boardIn * (1 - boardOut),
+          translate: `0 ${interpolate(boardIn, [0, 1], [-70, 0]) - boardOut * 40}px`,
         }}
       >
         <div
           style={{
-            padding: "34px 40px 40px",
-            borderRadius: 28,
-            background: "rgba(10, 8, 14, 0.82)",
-            border: "2px solid rgba(255, 211, 107, 0.35)",
-            boxShadow: "0 30px 80px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,211,107,0.06)",
+            ...glassPanel("rgba(54, 30, 128, 0.58)"),
+            padding: "36px 44px 44px",
+            borderRadius: 34,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 22,
+            gap: 24,
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 18,
+              gap: 20,
               fontFamily: FONT_BODY,
-              fontWeight: 600,
-              fontSize: 34,
-              letterSpacing: "0.32em",
-              color: "#f5ecd6",
+              fontWeight: 700,
+              fontSize: 40,
+              letterSpacing: "0.3em",
+              color: "#fff",
             }}
           >
             <div
               style={{
-                width: 18,
-                height: 18,
-                borderRadius: 9,
+                width: 20,
+                height: 20,
+                borderRadius: 10,
                 background: JEWELS[2],
                 boxShadow: `0 0 18px ${JEWELS[2]}`,
-                opacity: Math.floor(frame / 8) % 2 ? 1 : 0.35,
+                opacity: 0.55 + 0.45 * Math.sin(frame / 7) ** 2,
               }}
             />
             NOW ARRIVING
           </div>
-          <SplitFlap text="KALEIDOSCOPE" start={10} fontSize={70} />
-          <SplitFlap text="COLLECTIVE" start={22} fontSize={70} color="#f6c915" />
+          <SplitFlap text="KALEIDOSCOPE" start={14} fontSize={70} tile="#2a1a70" />
+          <SplitFlap text="COLLECTIVE" start={30} fontSize={70} color="#f6c915" tile="#2a1a70" />
         </div>
       </AbsoluteFill>
 
-      <AbsoluteFill
-        style={{
-          justifyContent: "flex-end",
-          alignItems: "center",
-          paddingBottom: 230,
-          opacity: interpolate(frame, [40, 56], [0, 1], clamp) * boardOut,
-        }}
-      >
+      <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 220 }}>
         <div
           style={{
+            ...glassPanel("rgba(54, 30, 128, 0.6)"),
+            padding: "24px 54px",
+            borderRadius: 999,
+            opacity: interpolate(frame, [52, 76], [0, 1], clamp) * (1 - boardOut),
+            translate: `0 ${interpolate(frame, [52, 76], [30, 0], { ...clamp, easing: Easing.out(Easing.cubic) })}px`,
             fontFamily: FONT_BODY,
             fontWeight: 700,
-            fontSize: 46,
-            letterSpacing: "0.22em",
+            fontSize: 52,
+            letterSpacing: "0.2em",
             color: "#fff",
-            textShadow: "0 4px 24px rgba(0,0,0,0.8)",
+            textShadow: SOFT_SHADOW,
+            whiteSpace: "nowrap",
           }}
         >
           NEXT STOP: TOP GRASS
         </div>
       </AbsoluteFill>
 
-      <Vignette strength={0.55} />
+      <Vignette strength={0.14} />
     </AbsoluteFill>
   );
 };

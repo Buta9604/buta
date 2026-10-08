@@ -1,15 +1,17 @@
-import {
-  AbsoluteFill,
-  Easing,
-  Img,
-  interpolate,
-  random,
-  staticFile,
-  useCurrentFrame,
-} from "remotion";
-import { ImpactFlash, Vignette } from "../components/Effects";
+import { AbsoluteFill, Easing, Img, interpolate, random, staticFile } from "remotion";
+import { ImpactFlash, LightRays, Vignette } from "../components/Effects";
+import { Reveal, useFadeUp } from "../components/Reveal";
 import { cameraOn, cameraStyle, JARS, mixCamera } from "../jars";
-import { FONT_BODY, FONT_DISPLAY, FONT_LUXE, GOLD_GRADIENT, textFill } from "../theme";
+import { useCurrentFrame } from "../time";
+import {
+  BG_VIOLET,
+  FONT_BODY,
+  FONT_DISPLAY,
+  FONT_LUXE,
+  GOLD_GRADIENT,
+  SOFT_SHADOW,
+  textFill,
+} from "../theme";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const PM = JARS.permanentMarker;
@@ -23,14 +25,14 @@ const Wreath: React.FC = () => {
   const leaves = [];
   for (const side of [-1, 1]) {
     for (let j = 0; j < LEAVES_PER_SIDE; j++) {
-      // Angle measured clockwise from 12 o'clock; branches climb from the bottom.
+      // Angle clockwise from 12 o'clock; the two branches climb from the bottom.
       const along = j / (LEAVES_PER_SIDE - 1);
       const angle = side * interpolate(along, [0, 1], [160, 35]);
       const rad = (angle * Math.PI) / 180;
       const size = interpolate(along, [0, 1], [130, 92]);
-      const grow = interpolate(frame, [6 + j * 3.5, 22 + j * 3.5], [0, 1], {
+      const grow = interpolate(frame, [14 + j * 5, 38 + j * 5], [0, 1], {
         ...clamp,
-        easing: Easing.bezier(0.34, 1.4, 0.64, 1),
+        easing: Easing.bezier(0.34, 1.3, 0.64, 1),
       });
       leaves.push(
         <Img
@@ -42,11 +44,10 @@ const Wreath: React.FC = () => {
             top: -Math.cos(rad) * WREATH_RADIUS - size / 2,
             height: size,
             width: size * LEAF_ASPECT,
-            // Tip follows the branch upward, tilted away from the medal.
             rotate: `${angle - side * 90 + side * 28}deg`,
             scale: String(grow),
             opacity: Math.min(1, grow * 1.5),
-            filter: "drop-shadow(0 0 10px rgba(255,200,90,0.45))",
+            filter: "drop-shadow(0 0 10px rgba(255,200,90,0.5))",
           }}
         />,
       );
@@ -55,17 +56,51 @@ const Wreath: React.FC = () => {
   return <div style={{ position: "absolute", left: 0, top: 0 }}>{leaves}</div>;
 };
 
+const FACE: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  borderRadius: "50%",
+  backfaceVisibility: "hidden",
+  WebkitBackfaceVisibility: "hidden",
+  background:
+    "radial-gradient(circle at 35% 30%, #fff6cf 0%, #f2cf6b 22%, #c99a2e 55%, #8a6a1c 100%)",
+  boxShadow:
+    "0 0 0 10px #7a5a14, 0 0 0 16px #e9c45c, 0 30px 80px rgba(30,10,90,0.45), 0 0 120px rgba(255,200,90,0.5)",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+};
+
+/** Gold medal that spins in like a flipped coin, then unfurls its ribbons. */
 const Medal: React.FC = () => {
   const frame = useCurrentFrame();
-  const sheen = interpolate(frame % 75, [20, 55], [-60, 160], clamp);
+  const spinT = interpolate(frame, [0, 46], [0, 1], {
+    ...clamp,
+    easing: Easing.bezier(0.1, 0.7, 0.2, 1),
+  });
+  const rotateY = (1 - spinT) * 900;
+  const ribbon = interpolate(frame, [40, 76], [0, 1], {
+    ...clamp,
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+  });
+  const sheen = interpolate((frame - 48) % 90, [0, 36], [-60, 160], clamp);
+
   return (
     <div style={{ position: "absolute", left: -215, top: -215, width: 430, height: 430 }}>
-      {/* Ribbon tails in the strain's colour */}
       <svg
         width={430}
         height={620}
         viewBox="0 0 430 620"
-        style={{ position: "absolute", left: 0, top: 120 }}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 120,
+          transformOrigin: "50% 28%",
+          scale: `1 ${ribbon}`,
+          opacity: ribbon,
+        }}
       >
         <path d="M150 180 L95 520 L150 480 L185 545 L215 220 Z" fill={PM.color} />
         <path d="M280 180 L335 520 L280 480 L245 545 L215 220 Z" fill="#5a2bb0" />
@@ -74,110 +109,116 @@ const Medal: React.FC = () => {
         style={{
           position: "absolute",
           inset: 0,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle at 35% 30%, #fff6cf 0%, #f2cf6b 22%, #c99a2e 55%, #8a6a1c 100%)",
-          boxShadow:
-            "0 0 0 10px #7a5a14, 0 0 0 16px #e9c45c, 0 30px 80px rgba(0,0,0,0.6), 0 0 120px rgba(255,200,90,0.45)",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
+          transformStyle: "preserve-3d",
+          transform: `perspective(1100px) rotateY(${rotateY}deg)`,
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 26,
-            borderRadius: "50%",
-            border: "4px solid rgba(90,60,10,0.55)",
-          }}
-        />
-        <div
-          style={{
-            fontFamily: FONT_LUXE,
-            fontWeight: 900,
-            fontSize: 150,
-            lineHeight: 0.9,
-            color: "#4a3208",
-            textShadow: "0 2px 0 rgba(255,240,190,0.7), 0 -1px 0 rgba(60,40,0,0.5)",
-          }}
-        >
-          1<span style={{ fontSize: 70, verticalAlign: "top", marginLeft: 4 }}>ST</span>
+        <div style={{ ...FACE, transform: "rotateY(180deg)" }}>
+          <Img src={staticFile("logo-leaf.png")} style={{ height: 300, opacity: 0.85 }} />
         </div>
-        <div
-          style={{
-            marginTop: 8,
-            fontFamily: FONT_BODY,
-            fontWeight: 700,
-            fontSize: 40,
-            letterSpacing: "0.35em",
-            marginRight: "-0.35em",
-            color: "#4a3208",
-          }}
-        >
-          PLACE
+        <div style={FACE}>
+          <div
+            style={{
+              position: "absolute",
+              inset: 26,
+              borderRadius: "50%",
+              border: "4px solid rgba(90,60,10,0.55)",
+            }}
+          />
+          <div
+            style={{
+              fontFamily: FONT_LUXE,
+              fontWeight: 900,
+              fontSize: 150,
+              lineHeight: 0.9,
+              color: "#4a3208",
+              textShadow: "0 2px 0 rgba(255,240,190,0.7), 0 -1px 0 rgba(60,40,0,0.5)",
+            }}
+          >
+            1<span style={{ fontSize: 70, verticalAlign: "top", marginLeft: 4 }}>ST</span>
+          </div>
+          <div
+            style={{
+              marginTop: 8,
+              fontFamily: FONT_BODY,
+              fontWeight: 700,
+              fontSize: 40,
+              letterSpacing: "0.35em",
+              marginRight: "-0.35em",
+              color: "#4a3208",
+            }}
+          >
+            PLACE
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `linear-gradient(115deg, transparent ${sheen - 20}%, rgba(255,255,240,0.75) ${sheen}%, transparent ${sheen + 20}%)`,
+              mixBlendMode: "screen",
+            }}
+          />
         </div>
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: `linear-gradient(115deg, transparent ${sheen - 20}%, rgba(255,255,240,0.75) ${sheen}%, transparent ${sheen + 20}%)`,
-            mixBlendMode: "screen",
-          }}
-        />
       </div>
     </div>
   );
 };
 
-/** 24-30 s, on the drop: Permanent Marker, 1st place. */
+/** On the drop: Permanent Marker, 1st place. */
 export const Winner: React.FC = () => {
   const frame = useCurrentFrame();
 
-  const medalIn = interpolate(frame, [0, 22], [0, 1], {
+  const medalIn = interpolate(frame, [0, 24], [0, 1], {
     ...clamp,
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
-  // The badge lifts to the top of the frame as the winning jar comes up.
-  const lift = interpolate(frame, [72, 104], [0, 1], {
+  // The medal glides to the top of the frame as the winning jar comes up.
+  const lift = interpolate(frame, [84, 124], [0, 1], {
     ...clamp,
     easing: Easing.bezier(0.65, 0, 0.35, 1),
   });
   const badgeY = interpolate(lift, [0, 1], [820, 450]);
-  const badgeScale = interpolate(medalIn, [0, 1], [0.75, 1]) * interpolate(lift, [0, 1], [1, 0.62]);
+  const badgeScale =
+    interpolate(medalIn, [0, 1], [0.5, 1]) * interpolate(lift, [0, 1], [1, 0.62]);
+  const float = Math.sin(frame / 22) * 7 * (1 - lift);
 
-  const jarIn = interpolate(frame, [76, 108], [0, 1], { ...clamp, easing: Easing.out(Easing.quad) });
+  const jarIn = interpolate(frame, [88, 128], [0, 1], {
+    ...clamp,
+    easing: Easing.inOut(Easing.cubic),
+  });
   const cam = mixCamera(
     cameraOn(PM.x, PM.y, 1.55, -200),
     cameraOn(PM.x, PM.y, 1.75, -200),
-    interpolate(frame, [76, 180], [0, 1], clamp),
+    interpolate(frame, [88, 180], [0, 1], clamp),
   );
-  const exit = interpolate(frame, [170, 180], [1, 0], clamp);
+  const cup = useFadeUp(34, 26, 20);
+  const thc = useFadeUp(128, 24, 22);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#07060a", overflow: "hidden" }}>
-      <AbsoluteFill style={{ opacity: jarIn }}>
-        <Img src={staticFile("jars-still.jpg")} style={{ ...cameraStyle(cam), filter: "saturate(1.15)" }} />
-      </AbsoluteFill>
-      <AbsoluteFill
-        style={{
-          background: `radial-gradient(circle at 50% ${badgeY / 19.2}%, rgba(60,44,10,${0.9 - jarIn * 0.5}) 0%, rgba(7,6,10,${1 - jarIn * 0.75}) 55%)`,
-        }}
+    <AbsoluteFill style={{ background: BG_VIOLET, overflow: "hidden" }}>
+      <LightRays
+        y={`${(badgeY / 19.2).toFixed(1)}%`}
+        opacity={interpolate(frame, [0, 30], [0, 0.85], clamp) * (1 - jarIn * 0.55)}
+        speed={0.16}
       />
+      <AbsoluteFill style={{ opacity: jarIn }}>
+        <Img
+          src={staticFile("jars-still.jpg")}
+          style={{ ...cameraStyle(cam), filter: "saturate(1.15) brightness(1.04)" }}
+        />
+      </AbsoluteFill>
       <AbsoluteFill
         style={{
           opacity: jarIn,
           background:
-            "linear-gradient(180deg, rgba(7,6,10,0.92) 0%, rgba(7,6,10,0.55) 32%, rgba(7,6,10,0) 48%, rgba(7,6,10,0) 62%, rgba(7,6,10,0.92) 86%)",
+            "linear-gradient(180deg, rgba(54,30,128,0.62) 0%, rgba(54,30,128,0.2) 30%, rgba(54,30,128,0) 46%, rgba(54,30,128,0) 64%, rgba(54,30,128,0.5) 100%)",
         }}
       />
 
       {/* Slow gold flakes, only in this scene */}
-      {new Array(36).fill(0).map((_, i) => {
+      {new Array(34).fill(0).map((_, i) => {
         const x = random(`flx${i}`) * 1080;
-        const speed = 2.2 + random(`fls${i}`) * 3;
+        const speed = 1.6 + random(`fls${i}`) * 2.2;
         const y = -60 + ((frame * speed + random(`fly${i}`) * 1920) % 2000);
         const size = 10 + random(`flz${i}`) * 16;
         return (
@@ -185,7 +226,7 @@ export const Winner: React.FC = () => {
             key={i}
             style={{
               position: "absolute",
-              left: x + Math.sin(frame / 14 + i) * 30,
+              left: x + Math.sin(frame / 18 + i) * 30,
               top: y,
               width: size,
               height: size * 0.55,
@@ -193,119 +234,91 @@ export const Winner: React.FC = () => {
               background: GOLD_GRADIENT,
               backgroundSize: "300% 100%",
               backgroundPosition: `${(i * 23) % 100}% 0`,
-              rotate: `${frame * (random(`flr${i}`) * 8 - 4) + i * 40}deg`,
-              opacity: interpolate(frame, [4, 20], [0, 0.9], clamp) * exit,
+              rotate: `${frame * (random(`flr${i}`) * 5 - 2.5) + i * 40}deg`,
+              opacity: interpolate(frame, [6, 30], [0, 0.9], clamp),
             }}
           />
         );
       })}
 
-      <AbsoluteFill style={{ opacity: exit }}>
-        <div
-          style={{
-            position: "absolute",
-            left: 540,
-            top: badgeY,
-            scale: String(badgeScale),
-            opacity: medalIn,
-          }}
-        >
-          <Wreath />
-          <Medal />
-        </div>
+      <div
+        style={{
+          position: "absolute",
+          left: 540,
+          top: badgeY + float,
+          scale: String(badgeScale),
+          opacity: Math.min(1, medalIn * 2),
+        }}
+      >
+        <Wreath />
+        <Medal />
+      </div>
 
+      <div
+        style={{
+          position: "absolute",
+          top: interpolate(lift, [0, 1], [270, 70]),
+          width: "100%",
+          textAlign: "center",
+          fontFamily: FONT_BODY,
+          fontWeight: 700,
+          fontSize: 38,
+          letterSpacing: "0.28em",
+          color: "#fff",
+          textShadow: SOFT_SHADOW,
+          ...cup,
+        }}
+      >
+        HIGH TIMES · NEW YORK CANNABIS CUP
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          top: interpolate(lift, [0, 1], [1280, 1490]),
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        {["PERMANENT", "MARKER"].map((word, i) => (
+          <Reveal
+            key={word}
+            at={46 + i * 14}
+            dur={34}
+            style={{ display: "inline-block" }}
+            innerStyle={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 900,
+              fontSize: 96,
+              lineHeight: 1.06,
+              whiteSpace: "nowrap",
+              filter: "drop-shadow(0 4px 16px rgba(30,10,90,0.6))",
+              ...textFill(GOLD_GRADIENT, `${(frame * 0.7) % 100}% 0`),
+            }}
+          >
+            {word}
+          </Reveal>
+        ))}
         <div
           style={{
-            position: "absolute",
-            top: interpolate(lift, [0, 1], [270, 70]),
-            width: "100%",
-            textAlign: "center",
+            marginTop: 24,
             fontFamily: FONT_BODY,
             fontWeight: 700,
-            fontSize: 36,
-            letterSpacing: "0.3em",
-            color: "#f5ecd6",
-            opacity: interpolate(frame, [26, 40], [0, 1], clamp),
+            fontSize: 56,
+            letterSpacing: "0.12em",
+            color: "#fff",
+            textShadow: SOFT_SHADOW,
+            ...thc,
           }}
         >
-          HIGH TIMES · NEW YORK CANNABIS CUP
+          THC {PM.thc}%
         </div>
+      </div>
 
-        <div
-          style={{
-            position: "absolute",
-            top: interpolate(lift, [0, 1], [1290, 1500]),
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              fontFamily: FONT_DISPLAY,
-              fontWeight: 900,
-              fontSize: 92,
-              lineHeight: 1.05,
-            }}
-          >
-            {"PERMANENT".split("").map((ch, i) => (
-              <WinnerLetter key={i} ch={ch} at={34 + i * 2} />
-            ))}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontFamily: FONT_DISPLAY,
-              fontWeight: 900,
-              fontSize: 92,
-              lineHeight: 1.05,
-            }}
-          >
-            {"MARKER".split("").map((ch, i) => (
-              <WinnerLetter key={i} ch={ch} at={52 + i * 2} />
-            ))}
-          </div>
-          <div
-            style={{
-              marginTop: 22,
-              fontFamily: FONT_BODY,
-              fontWeight: 700,
-              fontSize: 54,
-              letterSpacing: "0.12em",
-              color: "#f5ecd6",
-              opacity: interpolate(frame, [110, 124], [0, 1], clamp),
-            }}
-          >
-            THC {PM.thc}%
-          </div>
-        </div>
-      </AbsoluteFill>
-
-      <Vignette strength={0.5} />
-      <ImpactFlash at={0} length={16} color="#ffe9a8" peak={0.6} />
+      <Vignette strength={0.14} />
+      <ImpactFlash at={0} length={18} color="#ffe9a8" peak={0.45} />
     </AbsoluteFill>
-  );
-};
-
-const WinnerLetter: React.FC<{ ch: string; at: number }> = ({ ch, at }) => {
-  const frame = useCurrentFrame();
-  const t = interpolate(frame, [at, at + 14], [0, 1], {
-    ...clamp,
-    easing: Easing.out(Easing.cubic),
-  });
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        opacity: t,
-        translate: `0 ${interpolate(t, [0, 1], [30, 0])}px`,
-        ...textFill(GOLD_GRADIENT, `${(frame * 1.2) % 100}% 0`),
-        filter: "drop-shadow(0 4px 18px rgba(0,0,0,0.7)) drop-shadow(0 0 16px rgba(255,200,90,0.3))",
-      }}
-    >
-      {ch}
-    </span>
   );
 };

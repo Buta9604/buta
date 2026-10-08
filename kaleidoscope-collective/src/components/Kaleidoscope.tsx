@@ -1,11 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
-import {
-  cancelRender,
-  continueRender,
-  delayRender,
-  staticFile,
-  useCurrentFrame,
-} from "remotion";
+import { cancelRender, continueRender, delayRender, staticFile } from "remotion";
+import { useCurrentFrame } from "../time";
 import { FOOTAGE, frameSrc, HEIGHT, WIDTH } from "../timeline";
 
 const cache = new Map<string, HTMLImageElement>();
@@ -65,7 +60,7 @@ export const Kaleidoscope: React.FC<Props> = ({
   const canvas = useRef<HTMLCanvasElement>(null);
 
   const span = Math.max(1, sourceTo - sourceFrom);
-  const travelled = Math.floor(frame * speed) % (span * 2);
+  const travelled = Math.floor(Math.max(0, frame) * speed) % (span * 2);
   const index = Math.min(
     FOOTAGE.last,
     sourceFrom + (travelled <= span ? travelled : span * 2 - travelled),

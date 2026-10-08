@@ -1,115 +1,122 @@
-import {
-  AbsoluteFill,
-  Easing,
-  Img,
-  interpolate,
-  staticFile,
-  useCurrentFrame,
-} from "remotion";
-import { Vignette } from "../components/Effects";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile } from "remotion";
 import { Kaleidoscope } from "../components/Kaleidoscope";
-import { FONT_DISPLAY, PRISM_GRADIENT, textFill } from "../theme";
+import { Vignette } from "../components/Effects";
+import { Reveal } from "../components/Reveal";
+import { useCurrentFrame } from "../time";
+import { FONT_DISPLAY, glassPanel, PRISM_BRIGHT, SOFT_SHADOW, textFill } from "../theme";
 import { FOOTAGE } from "../timeline";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
 /**
- * 12-16 s. The jar footage folded into a slowly turning live kaleidoscope,
- * then irises open onto the real jars.
+ * The jar footage folded into a slowly turning live kaleidoscope with a
+ * frosted caption, then an iris opens onto the real jars.
  */
 export const KaleidoJars: React.FC = () => {
   const frame = useCurrentFrame();
-
-  const iris = interpolate(frame, [84, 116], [0, 1200], {
+  const iris = interpolate(frame, [82, 118], [0, 1250], {
     ...clamp,
     easing: Easing.inOut(Easing.cubic),
   });
+  const plaque = interpolate(frame, [6, 34], [0, 1], {
+    ...clamp,
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+  });
+  const plaqueOut = interpolate(frame, [74, 90], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
-      <AbsoluteFill>
+    <AbsoluteFill style={{ backgroundColor: "#2b1a74", overflow: "hidden" }}>
+      <AbsoluteFill style={{ scale: String(interpolate(frame, [0, 120], [1.0, 1.08])) }}>
         <Kaleidoscope
           sourceFrom={FOOTAGE.jars}
           sourceTo={FOOTAGE.jars + 70}
-          speed={0.7}
+          speed={0.6}
           segments={12}
           cx={373}
           cy={700}
-          zoom={interpolate(frame, [0, 120], [1.25, 2.1])}
-          rotation={frame * 0.6}
-          sourceRotation={-frame * 0.3}
-          style={{ filter: "saturate(1.4) contrast(1.1)" }}
+          zoom={interpolate(frame, [0, 120], [1.25, 1.9])}
+          rotation={frame * 0.5}
+          sourceRotation={-frame * 0.25}
+          style={{ filter: "saturate(1.35) contrast(1.06) brightness(1.08)" }}
         />
       </AbsoluteFill>
 
-      <AbsoluteFill
-        style={{
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.55) 70%)",
-        }}
-      />
-      <AbsoluteFill
-        style={{
-          opacity: interpolate(frame, [4, 14, 80, 92], [0, 1, 1, 0], clamp),
-          background:
-            "radial-gradient(ellipse 70% 22% at 50% 50%, rgba(6,5,10,0.85) 0%, rgba(6,5,10,0.6) 55%, rgba(6,5,10,0) 100%)",
-        }}
-      />
-
-      <AbsoluteFill
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          gap: 10,
-          opacity: interpolate(frame, [80, 92], [1, 0], clamp),
-        }}
-      >
-        {[
-          { text: "FOUR STRAINS.", at: 8, size: 92 },
-          { text: "INFINITE", at: 38, size: 140 },
-          { text: "COLOR.", at: 46, size: 160 },
-        ].map(({ text, at, size }) => {
-          const t = interpolate(frame, [at, at + 12], [0, 1], {
-            ...clamp,
-            easing: Easing.bezier(0.34, 1.56, 0.64, 1),
-          });
-          return (
-            <div
-              key={text}
-              style={{
-                fontFamily: FONT_DISPLAY,
-                fontWeight: 900,
-                fontSize: size,
-                lineHeight: 1.02,
-                opacity: Math.min(1, t * 2),
-                scale: String(interpolate(t, [0, 1], [1.6, 1])),
-                filter: `blur(${interpolate(t, [0, 1], [10, 0])}px) drop-shadow(0 8px 30px rgba(0,0,0,0.85))`,
-                ...(text === "FOUR STRAINS."
-                  ? { color: "#fff" }
-                  : textFill(PRISM_GRADIENT, `${(frame * 2) % 100}% 0`, "500% 100%")),
-              }}
-            >
-              {text}
-            </div>
-          );
-        })}
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <div
+          style={{
+            ...glassPanel("rgba(48, 24, 120, 0.7)"),
+            padding: "56px 70px 64px",
+            borderRadius: 48,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            opacity: plaque * (1 - plaqueOut),
+            scale: String(interpolate(plaque, [0, 1], [0.94, 1])),
+            translate: `0 ${-plaqueOut * 36}px`,
+          }}
+        >
+          <Reveal
+            at={14}
+            style={{ display: "inline-block" }}
+            innerStyle={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 900,
+              fontSize: 88,
+              lineHeight: 1.08,
+              color: "#fff",
+              textShadow: SOFT_SHADOW,
+              whiteSpace: "nowrap",
+            }}
+          >
+            FOUR STRAINS.
+          </Reveal>
+          <Reveal
+            at={30}
+            dur={32}
+            style={{ display: "inline-block", marginTop: 6 }}
+            innerStyle={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 900,
+              fontSize: 120,
+              lineHeight: 1.08,
+              whiteSpace: "nowrap",
+              filter: "drop-shadow(0 4px 14px rgba(24,8,80,0.5))",
+              ...textFill(PRISM_BRIGHT, `${(frame * 0.8) % 100}% 0`, "300% 100%"),
+            }}
+          >
+            INFINITE
+          </Reveal>
+          <Reveal
+            at={42}
+            dur={32}
+            style={{ display: "inline-block" }}
+            innerStyle={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 900,
+              fontSize: 120,
+              lineHeight: 1.08,
+              whiteSpace: "nowrap",
+              filter: "drop-shadow(0 4px 14px rgba(24,8,80,0.5))",
+              ...textFill(PRISM_BRIGHT, `${(40 + frame * 0.8) % 100}% 0`, "300% 100%"),
+            }}
+          >
+            COLOR.
+          </Reveal>
+        </div>
       </AbsoluteFill>
 
-      {/* Iris reveal onto the real jars */}
-      <AbsoluteFill
-        style={{
-          clipPath: `circle(${iris}px at 50% 52%)`,
-        }}
-      >
+      <AbsoluteFill style={{ clipPath: `circle(${iris}px at 50% 52%)` }}>
         <Img
           src={staticFile("jars-still.jpg")}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            scale: String(interpolate(frame, [84, 120], [1.35, 1.15], clamp)),
-            filter: "saturate(1.15)",
+            scale: String(interpolate(frame, [82, 120], [1.3, 1.14], clamp)),
+            filter: "saturate(1.12) brightness(1.04)",
           }}
         />
         <div
@@ -121,13 +128,14 @@ export const KaleidoJars: React.FC = () => {
             height: iris * 2,
             translate: "-50% -50%",
             borderRadius: "50%",
-            boxShadow: "inset 0 0 0 10px rgba(255,236,170,0.9), inset 0 0 60px rgba(255,200,90,0.8)",
-            opacity: interpolate(frame, [104, 118], [1, 0], clamp),
+            boxShadow:
+              "inset 0 0 0 8px rgba(255,236,170,0.9), inset 0 0 60px rgba(255,200,90,0.7)",
+            opacity: interpolate(frame, [102, 118], [1, 0], clamp),
           }}
         />
       </AbsoluteFill>
 
-      <Vignette strength={0.5} />
+      <Vignette strength={0.12} />
     </AbsoluteFill>
   );
 };

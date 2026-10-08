@@ -1,4 +1,5 @@
-import { random, useCurrentFrame } from "remotion";
+import { random } from "remotion";
+import { useCurrentFrame } from "../time";
 import { FONT_BODY } from "../theme";
 
 const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
